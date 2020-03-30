@@ -1,0 +1,136 @@
+﻿Build1=Default,eu.dimitrisp.sms13033
+File1=Main.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=randomaccessfile
+Library3=javaobject
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.DarkTheme)~\n~'End of default text.~\n~RemovePermission(android.permission.INTERNET)
+Module1=StateManager
+NumberOfFiles=1
+NumberOfLibraries=3
+NumberOfModules=1
+Version=9.801
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: 13033 SMS
+	#VersionCode: 2
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: False
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+	Private spReason As Spinner
+	Private btnPrivacy As Button
+	Private WebView1 As WebView
+	Private lblFullReason As Label
+	Public intReason As Int
+	Private btnPrepare As Button
+	Private etName As EditText
+	Private etSurname As EditText
+	Private etAddress As EditText
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("Main")
+	btnPrepare.Enabled = False
+	lblFullReason.Text = "Εισάγετε όνομα, επίθετο & διεύθυνση, επιλέξτε σκοπό μετακίνησης και η εφαρμογή θα προετοιμάσει το SMS για εσάς, για να το στείλετε απο την εφαρμογή αποστολής μηνυμάτων που χρησιμοποιείτε."
+	spReason.AddAll(Array As String("Επιλέξτε Σκοπό Μετακίνησης", "1. Φαρμακείο ή επίσκεψη στον γιατρό, εφόσον αυτό συνιστάται μετά από σχετική επικοινωνία.", "2. Εν λειτουργία κατάστημα προμηθειών αγαθών πρώτης ανάγκης (σούπερ μάρκετ, μίνι μάρκετ), όπου δεν είναι δυνατή η αποστολή τους.", "3. Τράπεζα, στο μέτρο που δεν είναι δυνατή η ηλεκτρονική συναλλαγή.", "4. Παροχή βοήθειας σε ανθρώπους που βρίσκονται σε ανάγκη.", "5. Τελετή (π.χ. κηδεία, γάμος, βάφτιση) υπό τους όρους που προβλέπει ο νόμος ή μετάβαση διαζευγμένων γονέων ή γονέων που τελούν σε διάσταση που είναι αναγκαία για τη διασφάλιση της επικοινωνίας γονέων και τέκνων, σύμφωνα με τις κείμενες διατάξεις.", "6. Σωματική άσκηση σε εξωτερικό χώρο ή κίνηση με κατοικίδιο ζώο, ατομικά ή ανά δύο άτομα, τηρώντας στην τελευταία αυτή περίπτωση την αναγκαία απόσταση 1,5 μέτρου."))
+	etName.Text = StateManager.GetSetting2("Name", "")
+	etSurname.Text = StateManager.GetSetting2("Surname", "")
+	etAddress.Text = StateManager.GetSetting2("Address", "")
+
+End Sub
+
+Sub Activity_Resume
+
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	StateManager.SetSetting("Name", etName.Text.ToUpperCase.replace(" ",""))
+	StateManager.SetSetting("Surname", etSurname.Text.ToUpperCase.replace(" ",""))
+	StateManager.SetSetting("Address", etAddress.Text.ToUpperCase.Trim)
+	StateManager.SaveSettings
+End Sub
+
+Sub Activity_KeyPress (KeyCode As Int) As Boolean
+
+	If KeyCode = KeyCodes.KEYCODE_BACK Then
+
+		If WebView1.Visible = True Then
+			WebView1.Visible = False
+			Return True
+		End If
+
+	End If
+
+End Sub
+
+Sub OpenSMSApp (Message As String)
+	Dim in As Intent
+	Dim number = "13033" As String
+	in.Initialize(in.ACTION_VIEW, "sms:" & number)
+	in.PutExtra("sms_body", Message)
+	StartActivity(in)
+End Sub
+
+Sub spReason_ItemClick (Position As Int, Value As Object)
+	If Position = 0 Then
+		btnPrepare.Enabled = False
+		lblFullReason.Text = "Εισάγετε όνομα, επίθετο & διεύθυνση, επιλέξτε σκοπό μετακίνησης και η εφαρμογή θα προετοιμάσει το SMS για εσάς, για να το στείλετε απο την εφαρμογή αποστολής μηνυμάτων που χρησιμοποιείτε."
+	Else
+		btnPrepare.Enabled = True
+		lblFullReason.Text = Value
+	End If
+	intReason = Position
+	
+End Sub
+
+Sub btnPrivacy_Click
+	WebView1.Visible = True
+	WebView1.LoadHtml("<html><body><h1>Βοήθεια</h1>Για την προετοιμασία του SMS συμπληρώστε τα πεδία της εφαρμογής και πατήστε το κουμπί ""Προετοιμασία"". Στην συνέχεια, θα ανοίξει η εφαρμογή αποστολής μηνυμάτων της συσκευής σας όπου θα πρέπει να πατήσετε το κουμπί αποστολής.<br/><h1>Προσωπικά Δεδομένα</h1>Η εφαρμογή δεν συλλέγει προσωπικά δεδομένα. Τα στοιχεία που εισάγετε, χρησιμοποιούνται αποκλειστικά και μόνο για την δημιουργία του SMS και αποθηκεύονται τοπικά στην συσκευή σας για να μην χρειάζεται να τα συμπληρώνετε κάθε φορά. Επίσης, η αποστολή του SMS γίνεται απο την προεπιλεγμένη εφαρμογή αποστολής μηνυμάτων της συσκευής σας.<br><br>Για να επιστρέψετε στην οθόνη δημιουργίας του SMS πατήστε το κουμπί επιστροφής.<br><br>Η εικόνα με την μάσκα είναι απο το Vecteezy. <a href=""https://www.vecteezy.com/free-vector/face-mask"">Face Mask Vectors by Vecteezy</a>")
+End Sub
+
+Sub btnPrepare_Click
+	Dim ComposeMessage As String
+	StateManager.SetSetting("Name", etName.Text)
+	StateManager.SetSetting("Surname", etSurname.Text)
+	StateManager.SetSetting("Address", etAddress.Text)
+	ComposeMessage = intReason & " " & etName.Text & " " & etSurname.Text & " " & etAddress.Text.ToUpperCase
+	OpenSMSApp(ComposeMessage)
+End Sub
+
+Sub etAddress_FocusChanged (HasFocus As Boolean)
+	If HasFocus = False Then
+		etAddress.Text = etAddress.Text.ToUpperCase.Trim
+	End If
+End Sub
+
+Sub etSurname_FocusChanged (HasFocus As Boolean)
+	If HasFocus = False Then
+		etSurname.Text = etSurname.Text.ToUpperCase.Trim
+	End If
+End Sub
+
+Sub etName_FocusChanged (HasFocus As Boolean)
+	If HasFocus = False Then
+		etName.Text = etName.Text.ToUpperCase.Trim
+	End If
+End Sub
