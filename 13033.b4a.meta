@@ -4,6 +4,6 @@ ModuleBreakpoints0=
 ModuleBreakpoints1=
 ModuleClosedNodes0=
 ModuleClosedNodes1=
-NavigationStack=Main,Activity_Create,41,6,Main,Activity_Pause,54,1,Main,etAddress_FocusChanged,107,6,Main,etSurname_FocusChanged,113,2,Main,etName_FocusChanged,119,1,Visual Designer,Main.bal,-100,6,Main,btnPrivacy_Click,93,6,Main,spReason_ItemClick,81,6,StateManager,innerSaveState,88,0,StateManager,Process_Globals,5,0
+NavigationStack=Main,spReason_ItemClick,116,0,Main,spHistory_ItemClick,164,6,Main,btnPrepare_Click,135,0,Main,ClearSpinner,171,1,Main,btnPrivacy_Click,128,0,Main,btnRm_Click,181,2,Main,Activity_Pause,89,6,Main,Globals,27,0,Visual Designer,Main.bal,-100,4,Main,Activity_Create,42,6
 SelectedBuild=0
 VisibleModules=1

@@ -2,8 +2,8 @@
 <manifest
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	package="eu.dimitrisp.sms13033"
-	android:versionCode="2"
-	android:versionName=""
+	android:versionCode="4"
+	android:versionName="CLEISTHENES"
 	android:installLocation="internalOnly">
 	
 	<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="28"/>

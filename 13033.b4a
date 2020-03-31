@@ -14,11 +14,12 @@ Version=9.801
 @EndOfDesignText@
 #Region  Project Attributes 
 	#ApplicationLabel: 13033 SMS
-	#VersionCode: 2
-	#VersionName: 
+	#VersionCode: 4
+	#VersionName: CLEISTHENES
 	'SupportedOrientations possible values: unspecified, landscape or portrait.
 	#SupportedOrientations: portrait
 	#CanInstallToExternalStorage: False
+	#BridgeLogger: True
 #End Region
 
 #Region  Activity Attributes 
@@ -40,11 +41,13 @@ Sub Globals
 	Private btnPrivacy As Button
 	Private WebView1 As WebView
 	Private lblFullReason As Label
-	Public intReason As Int
+	Public intReason, intHistory As Int
 	Private btnPrepare As Button
 	Private etName As EditText
-	Private etSurname As EditText
 	Private etAddress As EditText
+	Private cbSave As CheckBox
+	Private spHistory As Spinner
+	Private btnRm As Button
 End Sub
 
 Sub Activity_Create(FirstTime As Boolean)
@@ -53,10 +56,38 @@ Sub Activity_Create(FirstTime As Boolean)
 	btnPrepare.Enabled = False
 	lblFullReason.Text = "Εισάγετε όνομα, επίθετο & διεύθυνση, επιλέξτε σκοπό μετακίνησης και η εφαρμογή θα προετοιμάσει το SMS για εσάς, για να το στείλετε απο την εφαρμογή αποστολής μηνυμάτων που χρησιμοποιείτε."
 	spReason.AddAll(Array As String("Επιλέξτε Σκοπό Μετακίνησης", "1. Φαρμακείο ή επίσκεψη στον γιατρό, εφόσον αυτό συνιστάται μετά από σχετική επικοινωνία.", "2. Εν λειτουργία κατάστημα προμηθειών αγαθών πρώτης ανάγκης (σούπερ μάρκετ, μίνι μάρκετ), όπου δεν είναι δυνατή η αποστολή τους.", "3. Τράπεζα, στο μέτρο που δεν είναι δυνατή η ηλεκτρονική συναλλαγή.", "4. Παροχή βοήθειας σε ανθρώπους που βρίσκονται σε ανάγκη.", "5. Τελετή (π.χ. κηδεία, γάμος, βάφτιση) υπό τους όρους που προβλέπει ο νόμος ή μετάβαση διαζευγμένων γονέων ή γονέων που τελούν σε διάσταση που είναι αναγκαία για τη διασφάλιση της επικοινωνίας γονέων και τέκνων, σύμφωνα με τις κείμενες διατάξεις.", "6. Σωματική άσκηση σε εξωτερικό χώρο ή κίνηση με κατοικίδιο ζώο, ατομικά ή ανά δύο άτομα, τηρώντας στην τελευταία αυτή περίπτωση την αναγκαία απόσταση 1,5 μέτρου."))
-	etName.Text = StateManager.GetSetting2("Name", "")
-	etSurname.Text = StateManager.GetSetting2("Surname", "")
-	etAddress.Text = StateManager.GetSetting2("Address", "")
 
+	' For compatibility with older versions that had different fields for name & surname, and haven't used the save settings yet.
+	If StateManager.GetSetting2("Surname", "") <> "" Then
+		etName.Text = StateManager.GetSetting2("Name", "") & " " & StateManager.GetSetting2("Surname", "")
+		etAddress.Text = StateManager.GetSetting2("Address", "")
+		StateManager.SetSetting("Address", "")
+		StateManager.SetSetting("Name", "")
+		StateManager.SetSetting("Surname", "")
+		StateManager.SaveState(Activity, "Main")
+	End If
+	
+	
+	StateManager.RestoreState(Activity, "Main", 0)
+	spReason.SelectedIndex = 0
+	If File.Exists(File.DirInternal, "history.txt") Then
+		'MsgboxAsync("File exists", "Hi")
+		Dim lsHistory As List
+		lsHistory.Initialize
+		lsHistory = File.ReadList(File.DirInternal, "history.txt")
+		For i = 0 To lsHistory.Size - 1
+			spHistory.Add(lsHistory.Get(i))
+		Next
+	Else
+		spHistory.Add("ΙΣΤΟΡΙΚΟ ΟΝΟΜΑΤΩΝ")
+	End If
+	If cbSave.Checked = True Then
+		btnRm.Visible = True
+		spHistory.Visible = True
+	Else 
+		btnRm.Visible = False
+		spHistory.Visible = False
+	End If
 End Sub
 
 Sub Activity_Resume
@@ -64,10 +95,17 @@ Sub Activity_Resume
 End Sub
 
 Sub Activity_Pause (UserClosed As Boolean)
-	StateManager.SetSetting("Name", etName.Text.ToUpperCase.replace(" ",""))
-	StateManager.SetSetting("Surname", etSurname.Text.ToUpperCase.replace(" ",""))
-	StateManager.SetSetting("Address", etAddress.Text.ToUpperCase.Trim)
-	StateManager.SaveSettings
+	If cbSave.Checked = True Then
+		Dim lsHistory As List
+		lsHistory.Initialize
+		For i = 0 To spHistory.Size - 1
+			lsHistory.Add(spHistory.GetItem(i))
+		Next
+		File.WriteList(File.DirInternal, "history.txt", lsHistory)
+		StateManager.SaveSettings
+	End If
+	' Saves state, to make sure "Save details on device" won't be checked again on app start.
+	StateManager.SaveState(Activity, "Main")
 End Sub
 
 Sub Activity_KeyPress (KeyCode As Int) As Boolean
@@ -100,7 +138,6 @@ Sub spReason_ItemClick (Position As Int, Value As Object)
 		lblFullReason.Text = Value
 	End If
 	intReason = Position
-	
 End Sub
 
 Sub btnPrivacy_Click
@@ -110,27 +147,56 @@ End Sub
 
 Sub btnPrepare_Click
 	Dim ComposeMessage As String
-	StateManager.SetSetting("Name", etName.Text)
-	StateManager.SetSetting("Surname", etSurname.Text)
-	StateManager.SetSetting("Address", etAddress.Text)
-	ComposeMessage = intReason & " " & etName.Text & " " & etSurname.Text & " " & etAddress.Text.ToUpperCase
+	etAddress.Text = etAddress.Text.ToUpperCase.Trim
+	etName.Text = etName.Text.ToUpperCase.Trim
+	If cbSave.Checked = True And intHistory < 1 Then
+			spHistory.Add(etName.Text & " | " & etAddress.Text)
+	End If
+	ComposeMessage = intReason & " " & etName.Text & " " & etAddress.Text.ToUpperCase
 	OpenSMSApp(ComposeMessage)
 End Sub
 
-Sub etAddress_FocusChanged (HasFocus As Boolean)
-	If HasFocus = False Then
-		etAddress.Text = etAddress.Text.ToUpperCase.Trim
+Sub WebView1_OverrideUrl (Url As String) As Boolean
+	Dim in As Intent
+	in.Initialize(in.ACTION_VIEW, Url)
+	StartActivity(in)
+End Sub
+
+Sub spHistory_ItemClick (Position As Int, Value As Object)
+	intHistory = Position
+	If Position > 0 Then
+		Dim details(2) As String
+		details = Regex.split("\|", Value)
+		etName.Text = details(0).Trim
+		etAddress.Text = details(1).Trim
+	Else
+		etName.Text = ""
+		etAddress.Text = ""
 	End If
 End Sub
 
-Sub etSurname_FocusChanged (HasFocus As Boolean)
-	If HasFocus = False Then
-		etSurname.Text = etSurname.Text.ToUpperCase.Trim
+Sub cbSave_CheckedChange(Checked As Boolean)
+	spHistory.Visible = Checked
+	btnRm.Visible = Checked
+End Sub
+
+Sub etAddress_TextChanged (Old As String, New As String)
+	ClearSpinner
+End Sub
+
+Sub etName_TextChanged (Old As String, New As String)
+	ClearSpinner
+End Sub
+
+Sub ClearSpinner
+	If spHistory.SelectedIndex > 0 And cbSave.Checked = True Then
+		spHistory.SelectedIndex = 0
 	End If
 End Sub
 
-Sub etName_FocusChanged (HasFocus As Boolean)
-	If HasFocus = False Then
-		etName.Text = etName.Text.ToUpperCase.Trim
+Sub btnRm_Click
+	If intHistory > 0 Then
+		spHistory.RemoveAt(intHistory)
+		intHistory = 0
 	End If
 End Sub
